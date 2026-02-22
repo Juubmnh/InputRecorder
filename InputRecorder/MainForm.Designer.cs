@@ -41,6 +41,7 @@
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
+            lbHook = new Label();
             SuspendLayout();
             // 
             // ckKeyTyped
@@ -59,7 +60,7 @@
             btnHook.Location = new Point(492, 12);
             btnHook.Name = "btnHook";
             btnHook.Size = new Size(80, 24);
-            btnHook.TabIndex = 1;
+            btnHook.TabIndex = 2;
             btnHook.Text = "Run Hook";
             btnHook.UseVisualStyleBackColor = true;
             btnHook.Click += btnHook_Click;
@@ -69,14 +70,14 @@
             txtFilter.Location = new Point(372, 42);
             txtFilter.Name = "txtFilter";
             txtFilter.Size = new Size(200, 23);
-            txtFilter.TabIndex = 4;
+            txtFilter.TabIndex = 9;
             // 
             // btnFile
             // 
             btnFile.Location = new Point(12, 145);
             btnFile.Name = "btnFile";
             btnFile.Size = new Size(79, 24);
-            btnFile.TabIndex = 10;
+            btnFile.TabIndex = 11;
             btnFile.Text = "Output File";
             btnFile.UseVisualStyleBackColor = true;
             btnFile.Click += btnFile_Click;
@@ -85,9 +86,9 @@
             // 
             txtFile.Location = new Point(97, 146);
             txtFile.Name = "txtFile";
-            txtFile.ReadOnly = true;
             txtFile.Size = new Size(475, 23);
-            txtFile.TabIndex = 11;
+            txtFile.TabIndex = 12;
+            txtFile.Leave += txtFile_Leave;
             // 
             // lstFilter
             // 
@@ -95,14 +96,14 @@
             lstFilter.Location = new Point(372, 68);
             lstFilter.Name = "lstFilter";
             lstFilter.Size = new Size(200, 72);
-            lstFilter.TabIndex = 6;
+            lstFilter.TabIndex = 10;
             // 
             // btnFilter
             // 
             btnFilter.Location = new Point(12, 39);
             btnFilter.Name = "btnFilter";
             btnFilter.Size = new Size(148, 24);
-            btnFilter.TabIndex = 2;
+            btnFilter.TabIndex = 6;
             btnFilter.Text = "Add Filter Regex";
             btnFilter.UseVisualStyleBackColor = true;
             // 
@@ -112,8 +113,9 @@
             txtLog.Multiline = true;
             txtLog.Name = "txtLog";
             txtLog.ReadOnly = true;
+            txtLog.ScrollBars = ScrollBars.Vertical;
             txtLog.Size = new Size(560, 174);
-            txtLog.TabIndex = 12;
+            txtLog.TabIndex = 13;
             // 
             // lstFilterSwitch
             // 
@@ -121,14 +123,14 @@
             lstFilterSwitch.Location = new Point(166, 68);
             lstFilterSwitch.Name = "lstFilterSwitch";
             lstFilterSwitch.Size = new Size(200, 72);
-            lstFilterSwitch.TabIndex = 5;
+            lstFilterSwitch.TabIndex = 8;
             // 
             // txtFilterSwitch
             // 
             txtFilterSwitch.Location = new Point(166, 42);
             txtFilterSwitch.Name = "txtFilterSwitch";
             txtFilterSwitch.Size = new Size(200, 23);
-            txtFilterSwitch.TabIndex = 3;
+            txtFilterSwitch.TabIndex = 7;
             // 
             // label1
             // 
@@ -136,7 +138,7 @@
             label1.Location = new Point(12, 76);
             label1.Name = "label1";
             label1.Size = new Size(143, 17);
-            label1.TabIndex = 7;
+            label1.TabIndex = 3;
             label1.Text = "Combined keys are OK";
             // 
             // label2
@@ -145,7 +147,7 @@
             label2.Location = new Point(12, 93);
             label2.Name = "label2";
             label2.Size = new Size(107, 17);
-            label2.TabIndex = 8;
+            label2.TabIndex = 4;
             label2.Text = "Left for start/end";
             // 
             // label3
@@ -154,14 +156,24 @@
             label3.Location = new Point(12, 110);
             label3.Name = "label3";
             label3.Size = new Size(101, 17);
-            label3.TabIndex = 9;
+            label3.TabIndex = 5;
             label3.Text = "Right for output";
+            // 
+            // lbHook
+            // 
+            lbHook.AutoSize = true;
+            lbHook.Location = new Point(242, 16);
+            lbHook.Name = "lbHook";
+            lbHook.Size = new Size(244, 17);
+            lbHook.TabIndex = 1;
+            lbHook.Text = "Ending hook won't save unstopped data";
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(584, 361);
+            Controls.Add(lbHook);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -197,5 +209,6 @@
         private Label label1;
         private Label label2;
         private Label label3;
+        private Label lbHook;
     }
 }

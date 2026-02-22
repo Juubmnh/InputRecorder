@@ -7,15 +7,12 @@ internal class Filter
     private readonly TextBox _txtFilter;
     private readonly ListBox _lstFilter;
 
-    public Filter(Button? btnFilter, TextBox txtFilter, ListBox lstFilter, string defaultPattern)
+    public Filter(Button btnFilter, TextBox txtFilter, ListBox lstFilter)
     {
-        btnFilter?.Click += btnFilter_Click;
-
+        btnFilter.Click += btnFilter_Click;
         txtFilter.KeyDown += txtFilter_KeyDown;
         _txtFilter = txtFilter;
-
         lstFilter.MouseDoubleClick += lstFilter_MouseDoubleClick;
-        lstFilter.Items.Add(new Regex(defaultPattern));
         _lstFilter = lstFilter;
     }
 

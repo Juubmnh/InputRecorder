@@ -1,29 +1,43 @@
+using Microsoft.Extensions.Options;
 using SharpHook;
 using SharpHook.Data;
 using SharpHook.Providers;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace InputRecorder;
 
 internal partial class MainForm : Form
 {
-    private const string SAMPLE_FILENAME = "sample.ass";
+    private readonly InputRecorderOptions _options;
+    private const string SAMPLE_FILENAME = "Sample.ass";
 
     private EventLoopGlobalHook? _hook;
     private readonly Dictionary<KeyCode, bool> KeyStates = [];
     private readonly List<string> _pressed = [];
+
     private readonly Filter _filterSwitch, _filter;
     private readonly Stopwatch _stopwatch = new();
     private bool _recording;
     private readonly List<(TimeSpan, string)> _record = [];
-    private int _indexWritten = 0;
-    private FileStream? _stream;
 
-    public MainForm()
+    private FileStream? _stream;
+    private int _messageBoxShowedCount = 0;
+    private int _indexWritten = 0;
+
+    public MainForm(IOptions<InputRecorderOptions> options)
     {
         InitializeComponent();
-        _filter = new Filter(btnFilter, txtFilter, lstFilter, "^Button1$");
-        _filterSwitch = new Filter(btnFilter, txtFilterSwitch, lstFilterSwitch, "^VcF12$");
+        _filter = new(btnFilter, txtFilter, lstFilter);
+        _filterSwitch = new(btnFilter, txtFilterSwitch, lstFilterSwitch);
+
+        _options = options.Value;
+        ckKeyTyped.Checked = _options.KeyTypedEnabled;
+        ckKeyTyped_CheckedChanged(this, EventArgs.Empty);
+        lstFilterSwitch.Items.AddRange([.. _options.GetFilterSwitch(txtLog)]);
+        lstFilter.Items.AddRange([.. _options.GetFilter(txtLog)]);
+        txtFile.Text = _options.OutputFile;
+        CreateNewStream();
     }
 
     private async void btnHook_Click(object sender, EventArgs e)
@@ -46,6 +60,16 @@ internal partial class MainForm : Form
         else
         {
             btnHook.Text = "Run Hook";
+
+            if (_stopwatch.IsRunning)
+            {
+                _stopwatch.Stop();
+                _stopwatch.Reset();
+                _recording = false;
+                _record.Clear();
+                _indexWritten = 0;
+                txtLog.AppendText($"[-] Stopwatch Stopped\r\n");
+            }
         }
     }
 
@@ -69,7 +93,12 @@ internal partial class MainForm : Form
         {
             if (_stream is null)
             {
-                MessageBox.Show("Please select an output file");
+                if (_messageBoxShowedCount == 0)
+                {
+                    _messageBoxShowedCount++;
+                    MessageBox.Show("Please select an output file");
+                    _messageBoxShowedCount--;
+                }
             }
             else
             {
@@ -88,8 +117,6 @@ internal partial class MainForm : Form
                     if ((reader.ReadLine() ?? string.Empty).Equals("[Script Info]"))
                     {
                         _stream.Seek(0, SeekOrigin.End);
-                        writer.WriteLine();
-                        writer.WriteLine($"; {DateTime.Now}");
                     }
                     else
                     {
@@ -100,6 +127,8 @@ internal partial class MainForm : Form
                             writer.WriteLine(line);
                         }
                     }
+                    writer.WriteLine();
+                    writer.WriteLine($"; {DateTime.Now}");
 
                     for (int i = _indexWritten; i < _record.Count - 1; i++)
                     {
@@ -107,6 +136,8 @@ internal partial class MainForm : Form
                         writer.WriteLine($"Dialogue: 0,{ToAssTime(_record[i].Item1)},{ToAssTime(time)},Default,,0,0,0,,[Subtitle-{i + 1} ({str})]");
                     }
                     _indexWritten = _record.Count - 1;
+
+                    txtLog.AppendText($"[+] Writing Finished\r\n");
 
                     _recording = false;
                 }
@@ -134,7 +165,7 @@ internal partial class MainForm : Form
         }
         //else if (_stopwatch.IsRunning && _filter.IsUnfiltered(_pressed))
         else if (_recording && _filter.IsUnfiltered(_pressed))
-                {
+        {
             _record.Add((_stopwatch.Elapsed, item));
             txtLog.AppendText($"[+] {_stopwatch.Elapsed} ({item})\r\n");
         }
@@ -190,6 +221,24 @@ internal partial class MainForm : Form
         }
     });
 
+    private void CreateNewStream()
+    {
+        _stream?.Dispose();
+        try
+        {
+            var dir = Path.GetDirectoryName(txtFile.Text);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            _stream = new(txtFile.Text, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+        }
+        catch (Exception)
+        {
+            _stream = null;
+        }
+    }
+
     private void btnFile_Click(object sender, EventArgs e)
     {
         SaveFileDialog dialog = new()
@@ -202,12 +251,20 @@ internal partial class MainForm : Form
         if (dialog.ShowDialog() == DialogResult.OK)
         {
             txtFile.Text = dialog.FileName;
-            _stream = new(dialog.FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            CreateNewStream();
         }
     }
 
+    private void txtFile_Leave(object sender, EventArgs e) => CreateNewStream();
+
     private async void MainForm_FormClosing(object sender, EventArgs e)
     {
+        _options.KeyTypedEnabled = ckKeyTyped.Checked;
+        _options.FilterSwitch = string.Join('/', lstFilterSwitch.Items.Cast<Regex>().Select(regex => regex.ToString()));
+        _options.Filter = string.Join('/', lstFilter.Items.Cast<Regex>().Select(regex => regex.ToString()));
+        _options.OutputFile = txtFile.Text;
+        _options.WriteToFile();
+
         _hook?.Dispose();
         _stream?.Dispose();
     }
